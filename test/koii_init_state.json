@@ -1,0 +1,14 @@
+{
+  "ticker": "Test",
+  "name": "test",
+  "balances": {
+    "LSIJ01YuIj2aMxNzuBOdynvtXjgm5e_zjm3Qxc2BDro": 5
+  },
+  "stakes": {
+  },
+  "tasks": [],
+  "preRegisterDatas": [],
+  "distributionBlock": 0,
+  "cleanPreRegisterBlock": 0,
+  "frozen": false
+}
