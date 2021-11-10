@@ -10,7 +10,7 @@ Template to create, test, and deploy tasks
 
 ## Scripts
 
-- `build`
+- `build` Build the smartcontract
 - `test` Runs all tests, or a secific test
 - `deploy`
 - `deployExecutable`
