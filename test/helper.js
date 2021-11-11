@@ -1,6 +1,45 @@
 require("dotenv").config();
 const fsPromises = require("fs/promises");
-const koiSdk = require("@_koi/sdk/node");
+const KoiiSdk = require("@_koi/sdk/node");
+const ArLocal = require("arlocal").default;
+const Arweave = require("arweave");
+
+const arLocal = new ArLocal();
+const arweave = Arweave.init({
+        host: "localhost",
+        protocol: "http",
+        port: 1984
+});
+
+console.log("NODE_MODE", process.env.NODE_MODE);
+
+async function setupKoiiNode() {
+  // Mine first 10 blocks to avoid weird behavior
+
+
+  // Register koii contract
+  const koiiContractTxId = "PlaceHolder";
+
+  // Create tools instance using newly registered koii contract
+  const tools = KoiiSdk("none", koiiContractTxId, arweave);
+
+	// Setup service mode
+  let expressApp;
+  if (process.env.NODE_MODE === "service") {
+    tools.loadRedisClient();
+    const express = require("express");
+    const cors = require("cors");
+    const cookieParser = require("cookie-parser");
+    expressApp = express();
+    expressApp.use(cors());
+    expressApp.use(express.urlencoded({ extended: true }));
+    expressApp.use(express.json());
+    expressApp.use(jsonErrorHandler);
+    expressApp.use(cookieParser());
+  }
+
+	// Load task
+}
 
 class Namespace {
   constructor(taskTxId, expressApp) {
@@ -32,21 +71,8 @@ function jsonErrorHandler(err, req, res, next) {
   next();
 }
 
-async function setupKoiiNode() {
-	// Setup service mode
-  let expressApp;
-  if (operationMode === "service") {
-    tools.loadRedisClient();
-    const express = require("express");
-    const cors = require("cors");
-    const cookieParser = require("cookie-parser");
-    expressApp = express();
-    expressApp.use(cors());
-    expressApp.use(express.urlencoded({ extended: true }));
-    expressApp.use(express.json());
-    expressApp.use(jsonErrorHandler);
-    expressApp.use(cookieParser());
-  }
-
-	// Load task
+module.exports = {
+  arLocal,
+  arweave,
+  setupKoiiNode
 }
