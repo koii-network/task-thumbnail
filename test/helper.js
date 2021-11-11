@@ -140,5 +140,6 @@ function jsonErrorHandler(err, req, res, next) {
 module.exports = {
   arLocal,
   arweave,
-  setupKoiiNode
+  setupKoiiNode,
+  mineBlock
 }

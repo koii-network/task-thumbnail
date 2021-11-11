@@ -1,7 +1,8 @@
 const {
 	arLocal,
 	arweave,
-	setupKoiiNode
+	setupKoiiNode,
+	mineBlock
 } = require("./helper");
 
 beforeAll(async () => {
