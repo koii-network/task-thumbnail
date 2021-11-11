@@ -4,8 +4,12 @@ const KoiiSdk = require("@_koi/sdk/node");
 const ArLocal = require("arlocal").default;
 const Arweave = require("arweave");
 const axios = require("axios");
+const fsPromises = require("fs/promises");
+const kohaku = require("@_koi/kohaku");
 
 const AR_LOCAL_PORT = 1984;
+const WALLET_PATH = "test_wallet.json";
+
 const arLocal = new ArLocal(AR_LOCAL_PORT);
 const arweave = Arweave.init({
   host: "localhost",
@@ -13,17 +17,20 @@ const arweave = Arweave.init({
   port: AR_LOCAL_PORT
 });
 
-console.log("NODE_MODE", process.env.NODE_MODE);
-
 async function setupKoiiNode() {
   // Mine first 10 blocks to avoid weird behavior
   await mineBlock(10);
 
-  // Register koii contract
-  const koiiContractTxId = "PlaceHolder";
+  // Register Koii contract
+  const jwk = await fsPromises.readFile(WALLET_PATH);
+  const koiiContractSrc = (await axios.get("https://arweave.net/" + process.env.KOII_CONTRACT_SRC_ID)).data;
+  const koiiInitState = await fsPromises.readFile("koii_init_state.json");
+  const koiiContractTxId = await kohaku.createContract(arweave, jwk, koiiContractSrc, koiiInitState);
+  await mineBlock();
 
   // Create tools instance using newly registered koii contract
   const tools = KoiiSdk("none", koiiContractTxId, arweave);
+  await tools.loadWallet(jwk);
 
 	// Setup service mode
   let expressApp;
@@ -41,6 +48,7 @@ async function setupKoiiNode() {
   }
 
 	// Load task
+  //
 }
 
 class Namespace {
@@ -65,7 +73,7 @@ class Namespace {
 }
 
 async function mineBlock(amount) {
-  let url = `http://localhost:${AR_LOCAL_PORT}/mine`;
+  let url = `http://localhost:${AR_LOCAL_PORT}/mine/`;
   if (amount) url += amount;
   return axios.get(url);
 }
