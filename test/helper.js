@@ -3,19 +3,21 @@ const fsPromises = require("fs/promises");
 const KoiiSdk = require("@_koi/sdk/node");
 const ArLocal = require("arlocal").default;
 const Arweave = require("arweave");
+const axios = require("axios");
 
-const arLocal = new ArLocal();
+const AR_LOCAL_PORT = 1984;
+const arLocal = new ArLocal(AR_LOCAL_PORT);
 const arweave = Arweave.init({
-        host: "localhost",
-        protocol: "http",
-        port: 1984
+  host: "localhost",
+  protocol: "http",
+  port: AR_LOCAL_PORT
 });
 
 console.log("NODE_MODE", process.env.NODE_MODE);
 
 async function setupKoiiNode() {
   // Mine first 10 blocks to avoid weird behavior
-
+  await mineBlock(10);
 
   // Register koii contract
   const koiiContractTxId = "PlaceHolder";
@@ -62,6 +64,11 @@ class Namespace {
   }
 }
 
+async function mineBlock(amount) {
+  let url = `http://localhost:${AR_LOCAL_PORT}/mine`;
+  if (amount) url += amount;
+  return axios.get(url);
+}
 
 function jsonErrorHandler(err, req, res, next) {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
