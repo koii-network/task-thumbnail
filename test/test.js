@@ -16,6 +16,6 @@ afterAll(async () => {
 test("Block height is 0", async () => {
 	const networkInfo = await arweave.network.getInfo();
 	height = networkInfo.height;
-	expect(height).toEqual(0);
+	expect(height).toBeGreaterThan(10);
 });
 

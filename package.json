@@ -7,11 +7,16 @@
     "build": "rollup --config ./rollup.config.js && node ./bin/format.js",
     "test": "jest"
   },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 60000
+  },
   "devDependencies": {
     "@_koi/sdk": "2.5.0-beta.1",
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.6",
     "arlocal": "^1.1.8",
+    "cookie-parser": "^1.4.5",
     "jest": "^27.3.1",
     "rollup": "^2.59.0",
     "rollup-plugin-node-polyfills": "^0.2.1",

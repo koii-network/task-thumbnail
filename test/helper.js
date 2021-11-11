@@ -1,14 +1,14 @@
 require("dotenv").config();
 const fsPromises = require("fs/promises");
-const KoiiSdk = require("@_koi/sdk/node");
+const koiiSdk = require("@_koi/sdk/node");
 const ArLocal = require("arlocal").default;
 const Arweave = require("arweave");
 const axios = require("axios");
-const fsPromises = require("fs/promises");
 const kohaku = require("@_koi/kohaku");
 
 const AR_LOCAL_PORT = 1984;
-const WALLET_PATH = "test_wallet.json";
+const TASK_PORT = 8887;
+const WALLET_PATH = "test/test_wallet.json";
 
 const arLocal = new ArLocal(AR_LOCAL_PORT);
 const arweave = Arweave.init({
@@ -22,14 +22,26 @@ async function setupKoiiNode() {
   await mineBlock(10);
 
   // Register Koii contract
-  const jwk = await fsPromises.readFile(WALLET_PATH);
+  const jwk = JSON.parse(await fsPromises.readFile(WALLET_PATH));
   const koiiContractSrc = (await axios.get("https://arweave.net/" + process.env.KOII_CONTRACT_SRC_ID)).data;
-  const koiiInitState = await fsPromises.readFile("koii_init_state.json");
-  const koiiContractTxId = await kohaku.createContract(arweave, jwk, koiiContractSrc, koiiInitState);
+  const koiiInitState = await fsPromises.readFile("test/koii_init_state.json");
+  const koiiContractId = await kohaku.createContract(arweave, jwk, koiiContractSrc, koiiInitState);
+  await mineBlock();
+
+  // Register task to Koii contract
+  const taskContractSrc = await fsPromises.readFile("dist/contract_src.js");
+  const taskInitState = await fsPromises.readFile("contract/init_state.json");
+  const taskContractId = await kohaku.createContract(arweave, jwk, taskContractSrc, taskInitState);
+  await mineBlock();
+  await kohaku.interactWrite(arweave, jwk, koiiContractId, {
+    function: "registerTask",
+    taskName: "test",
+    taskTxId: taskContractId
+  });
   await mineBlock();
 
   // Create tools instance using newly registered koii contract
-  const tools = KoiiSdk("none", koiiContractTxId, arweave);
+  const tools = new koiiSdk.Node("none", koiiContractId, arweave);
   await tools.loadWallet(jwk);
 
 	// Setup service mode
@@ -47,8 +59,45 @@ async function setupKoiiNode() {
     expressApp.use(cookieParser());
   }
 
-	// Load task
-  //
+	// Load executable
+  const executableSrc = await fsPromises.readFile("executable.js", "utf8");
+  const loadedTask = new Function(`
+    const [tools, namespace, require] = arguments;
+    ${executableSrc}
+    return {setup, execute};`
+  );
+  const executableTask = loadedTask(
+    tools,
+    new Namespace(taskContractId),
+    require
+  );
+
+  // Initialize kohaku
+  console.log("Initializing Koii contract for Kohaku");
+  await tools.getKoiiStateAwait();
+  const initialHeight = kohaku.getCacheHeight();
+  console.log("Kohaku initialized to height", kohaku.getCacheHeight());
+  if (initialHeight < 1) throw new Error("Failed to initialize");
+
+  // Initialize tasks then start express app
+  await executableTask.setup(null);
+  if (process.env.NODE_MODE === "service") {
+    expressApp.get("/tasks", (_req, res) => {
+      res.send([taskContractId]);
+    });
+    expressApp.listen(TASK_PORT, () => {
+      console.log(`Open http://localhost:${TASK_PORT} to view in browser`);
+    });
+    const routes = expressApp._router.stack
+      .map((route) => route.route)
+      .filter((route) => route !== undefined)
+      .map((route) => route.path);
+    console.log("Routes:\n-", routes.join("\n- "));
+  }
+
+  // Execute tasks
+  await executableTask.execute(null);
+  console.log("All tasks complete");
 }
 
 class Namespace {
