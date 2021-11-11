@@ -10,7 +10,10 @@ const AR_LOCAL_PORT = 1984;
 const TASK_PORT = 8887;
 const WALLET_PATH = "test/test_wallet.json";
 
-const arLocal = new ArLocal(AR_LOCAL_PORT);
+const arLocal = new ArLocal(
+  AR_LOCAL_PORT,
+  false // Set false to disable logs
+);
 const arweave = Arweave.init({
   host: "localhost",
   protocol: "http",
@@ -68,12 +71,11 @@ async function setupKoiiNode() {
   );
   const executableTask = loadedTask(
     tools,
-    new Namespace(taskContractId),
+    new Namespace(taskContractId, expressApp),
     require
   );
 
   // Initialize kohaku
-  console.log("Initializing Koii contract for Kohaku");
   await tools.getKoiiStateAwait();
   const initialHeight = kohaku.getCacheHeight();
   console.log("Kohaku initialized to height", kohaku.getCacheHeight());

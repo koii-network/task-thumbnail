@@ -1,3 +1,6 @@
+# Arlocal db
+*.db
+
 # Logs
 logs
 *.log
