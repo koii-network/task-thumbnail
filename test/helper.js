@@ -43,7 +43,7 @@ async function setupKoiiNode() {
   });
   await mineBlock();
 
-  // Create tools instance using newly registered koii contract
+  // Create tools instance using newly registered koii contract and arlocal arweave instance
   const tools = new koiiSdk.Node("none", koiiContractId, arweave);
   await tools.loadWallet(jwk);
 
