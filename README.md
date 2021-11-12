@@ -16,3 +16,7 @@ Template to create, test, and deploy tasks
 - `deployExecutable`
 - `deployInitJson`
 - `deployContract`
+
+## Todo
+
+- Change SDK rate limit so it can run at an accelerated time frame for testing purposes
