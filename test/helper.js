@@ -97,9 +97,8 @@ async function setupKoiiNode() {
     console.log("Routes:\n-", routes.join("\n- "));
   }
 
-  // Execute tasks
-  await executableTask.execute(null);
-  console.log("All tasks complete");
+  // Execute task async in background
+  executableTask.execute(null).catch((e) => console.error("TASK CRASHED CATASTROPHICALLY:", e));
 }
 
 class Namespace {

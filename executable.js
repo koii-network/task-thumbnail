@@ -47,7 +47,7 @@ async function service(taskState, block) {
       function: "tallyBalance",
       method: "add"
     }
-    const txId = kohaku.interactWrite(
+    const txId = await kohaku.interactWrite(
       arweave,
       tools.wallet,
       namespace.taskTxId,

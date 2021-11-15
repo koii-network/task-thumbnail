@@ -17,6 +17,16 @@ Template to create, test, and deploy tasks
 - `deployInitJson`
 - `deployContract`
 
+## Testing
+
+Install dependencies using `yarn install`
+
+Test with jest `yarn build && yarn test`
+
+or
+
+Test with node `yarn build && node test`
+
 ## Todo
 
 - Change SDK rate limit so it can run at an accelerated time frame for testing purposes
