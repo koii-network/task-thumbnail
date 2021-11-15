@@ -26,14 +26,20 @@ async function setupKoiiNode() {
 
   // Register Koii contract
   const jwk = JSON.parse(await fsPromises.readFile(WALLET_PATH));
+  const walletAddress = await arweave.wallets.jwkToAddress(jwk);
+  console.log("Using wallet", walletAddress);
   const koiiContractSrc = (await axios.get("https://arweave.net/" + process.env.KOII_CONTRACT_SRC_ID)).data;
   const koiiInitState = await fsPromises.readFile("test/koii_init_state.json");
   const koiiContractId = await kohaku.createContract(arweave, jwk, koiiContractSrc, koiiInitState);
   await mineBlock();
 
+  // Replace koiiContractId with newly generated one
+  let taskInitState = JSON.parse(await fsPromises.readFile("contract/init_state.json"));
+  taskInitState.koiiContractId = koiiContractId;
+  taskInitState = JSON.stringify(taskInitState);
+
   // Register task to Koii contract
   const taskContractSrc = await fsPromises.readFile("dist/contract_src.js");
-  const taskInitState = await fsPromises.readFile("contract/init_state.json");
   const taskContractId = await kohaku.createContract(arweave, jwk, taskContractSrc, taskInitState);
   await mineBlock();
   await kohaku.interactWrite(arweave, jwk, koiiContractId, {
