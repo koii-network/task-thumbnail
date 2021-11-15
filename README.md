@@ -29,6 +29,3 @@ or
 
 Test with node `yarn build && node test`
 
-## Todo
-
-- Change SDK rate limit so it can run at an accelerated time frame for testing purposes
