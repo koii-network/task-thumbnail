@@ -67,7 +67,7 @@ function rateLimit() {
 }
 
 async function checkTxConfirmation(txId, timeout) {
-  console.log(`TxId: ${txId}\nWaiting for confirmation`);
+  console.log(`Waiting for TX: ${txId}`);
   const start = Date.now();
   for (;;) {
     const status = (await arweave.transactions.getStatus(txId)).status;

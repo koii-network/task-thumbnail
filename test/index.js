@@ -17,6 +17,8 @@ async function main() {
     await mineBlock();
     await sleepAsync(200);
   }
+
+  console.log("Test finished, press Ctrl + C to exit");
 }
 
 async function sleepAsync(ms) {
