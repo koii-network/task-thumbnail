@@ -7,7 +7,7 @@ const {
 
 async function main() {
   await arLocal.start();
-  await setupKoiiNode();
+  const tools = await setupKoiiNode();
   console.log("Waiting 3s for node to setup");
   await sleepAsync(3000);
 

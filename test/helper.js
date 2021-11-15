@@ -43,8 +43,8 @@ async function setupKoiiNode() {
   });
   await mineBlock();
 
-  // Create tools instance using newly registered koii contract and arlocal arweave instance
-  const tools = new koiiSdk.Node("none", koiiContractId, arweave);
+  // Create tools instance using newly registered koii contract and arlocal arweave instance with 0 ratelimit
+  const tools = new koiiSdk.Node("none", koiiContractId, arweave, 0);
   await tools.loadWallet(jwk);
 
 	// Setup service mode
@@ -99,6 +99,8 @@ async function setupKoiiNode() {
 
   // Execute task async in background
   executableTask.execute(null).catch((e) => console.error("TASK CRASHED CATASTROPHICALLY:", e));
+
+  return tools;
 }
 
 class Namespace {
