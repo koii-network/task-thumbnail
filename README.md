@@ -21,6 +21,8 @@ Template to create, test, and deploy tasks
 
 Install dependencies using `yarn install`
 
+Setup your `.env` using `cp .env.example .env`
+
 Test with jest `yarn build && yarn test`
 
 or
