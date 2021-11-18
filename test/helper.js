@@ -68,7 +68,29 @@ async function setupKoiiNode() {
     expressApp.use(cookieParser());
   }
 
-	// Load executable
+  // Define Namespace
+  class Namespace {
+    constructor(taskTxId, expressApp) {
+      this.taskTxId = taskTxId;
+      this.app = expressApp;
+    }
+    redisGet(path) {
+      return tools.redisGetAsync(this.taskTxId + path);
+    }
+    redisSet(path, data) {
+      return tools.redisSetAsync(this.taskTxId + path, data);
+    }
+    async fs(method, path, ...args) {
+      const basePath = "namespace/" + this.taskTxId;
+      await fsPromises.mkdir(basePath, { recursive: true }).catch(() => {});
+      return fsPromises[method](`${basePath}/${path}`, ...args);
+    }
+    express(method, path, callback) {
+      return this.app[method]("/" + this.taskTxId + path, callback);
+    }
+  }
+
+  // Load executable
   const executableSrc = await fsPromises.readFile("executable.js", "utf8");
   const loadedTask = new Function(`
     const [tools, namespace, require] = arguments;
@@ -109,26 +131,6 @@ async function setupKoiiNode() {
   return tools;
 }
 
-class Namespace {
-  constructor(taskTxId, expressApp) {
-    this.taskTxId = taskTxId;
-    this.app = expressApp;
-  }
-  redisGet(path) {
-    return tools.redisGetAsync(this.taskTxId + path);
-  }
-  redisSet(path, data) {
-    return tools.redisSetAsync(this.taskTxId + path, data);
-  }
-  async fs(method, path, ...args) {
-    const basePath = "namespace/" + this.taskTxId;
-    await fsPromises.mkdir(basePath, { recursive: true }).catch(() => {});
-    return fsPromises[method](`${basePath}/${path}`, ...args);
-  }
-  express(method, path, callback) {
-    return this.app[method]("/" + this.taskTxId + path, callback);
-  }
-}
 
 async function mineBlock(amount) {
   let url = `http://localhost:${AR_LOCAL_PORT}/mine/`;
