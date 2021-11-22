@@ -5,7 +5,7 @@ Template to create, test, and deploy tasks
 
 - `bin` Scripts to test and deploy tasks
 - `contract` Source code for smart contract
-- `executable` Source code for executable
+- `executable` Source code for task executable
 - `tests` Scripts to test task
 
 ## Scripts
@@ -19,13 +19,8 @@ Template to create, test, and deploy tasks
 
 ## Testing
 
-Install dependencies using `yarn install`
-
-Setup your `.env` using `cp .env.example .env`
-
-Test with jest `yarn build && yarn test`
-
-or
-
-Test with node `yarn build && node test`
-
+1. Install dependencies using `yarn install`
+2. Setup your `.env` using `cp .env.example .env`
+3. Make sure redis is running (only required for service mode)
+4. Test with node `yarn build && node test`
+    - Or test with jest `yarn build && yarn test`
