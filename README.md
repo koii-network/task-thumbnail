@@ -22,5 +22,5 @@ Template to create, test, and deploy tasks
 1. Install dependencies using `yarn install`
 2. Setup your `.env` using `cp .env.example .env`
 3. Make sure redis is running (only required for service mode)
-4. Test with node `yarn build && node test`
-    - Or test with jest `yarn build && yarn test`
+4. Test with node `yarn build && node test` (uses `tests/index.js`)
+    - Or test with jest `yarn build && yarn test` (uses `tests/test.js`)
