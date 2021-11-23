@@ -231,6 +231,7 @@ await update(data.id, cid);
     
 }
 };      
+// ******************* End Create Thumbnail ************************* //
 
 async function service(taskState, block) {
   if (lastBlock < block) {
