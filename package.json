@@ -21,5 +21,12 @@
     "rollup": "^2.59.0",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "uglify-js": "^3.14.3"
+  },
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "ffmpeg-extract-frames": "^2.0.2",
+    "ipfs-core": "^0.12.1",
+    "puppeteer": "^11.0.0",
+    "sharp": "^0.29.3"
   }
 }
