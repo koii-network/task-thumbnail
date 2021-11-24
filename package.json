@@ -27,6 +27,7 @@
     "ffmpeg-extract-frames": "^2.0.2",
     "ipfs-core": "^0.12.1",
     "puppeteer": "^11.0.0",
+    "redis": "^3.1.2",
     "sharp": "^0.29.3"
   }
 }

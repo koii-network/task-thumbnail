@@ -15,6 +15,8 @@ const IPFS = require('ipfs-core');
 const CID = require('multiformats/cid');
 const { response } = require("express");
 let ipfs;
+const redis = require('redis');
+const client = redis.createClient();
 require("dotenv").config();
 let contractInitialStateTx = "-cH8D20W-5Rql6sVcKWQ0j0NkjDGqWfqpWkCVNjdsn0";
 
@@ -25,31 +27,35 @@ let lastBlock = 0;
 async function setup(_init_state) {
   if (namespace.app) {
     namespace.express("get", "/", root);
-    namespace.express("get", "/id", getId);
+    namespace.express("get", "/thumbnail/:id", getId);
     namespace.express("get", "/generateCard/:id", generateCard);
     namespace.express("post", "/generateCardWithData", generateCardWithData);
   }
   if (!ipfs) ipfs = await IPFS.create();
 }
 
-async function execute(_init_state) {
-  let state, block;
-  for (;;) {
-    await rateLimit();
-    try {
-      state = await tools.getState(namespace.taskTxId);
-      block = await tools.getBlockHeight();
-      if (block < lastBlock) block = lastBlock;
-    } catch (e) {
-      console.error("Error getting task state or block", e);
-      continue;
-    }
-    await (namespace.app ? service : witness)(state, block).catch((e) => {
-      console.error("Error while performing task:", e);
-    });
-    lastBlock = block;
-  }
-}
+client.set("gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM", "QmVhDHYYas6rnt8frPqKp6T2KjobJfCDVEYEUUH8ZgBZhF", redis.print)
+client.get("gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM", function(err, reply) {
+  console.log(reply.toString()); // Will print "QmVhDHYYas6rnt8frPqKp6T2KjobJfCDVEYEUUH8ZgBZhF"
+});
+// async function execute(_init_state) {
+//   let state, block;
+//   for (;;) {
+//     await rateLimit();
+//     try {
+//       state = await tools.getState(namespace.taskTxId);
+//       block = await tools.getBlockHeight();
+//       if (block < lastBlock) block = lastBlock;
+//     } catch (e) {
+//       console.error("Error getting task state or block", e);
+//       continue;
+//     }
+//     await (namespace.app ? service : witness)(state, block).catch((e) => {
+//       console.error("Error while performing task:", e);
+//     });
+//     lastBlock = block;
+//   }
+// }
 
 async function root(_req, res) {
   res
@@ -58,8 +64,22 @@ async function root(_req, res) {
     .send(await tools.getState(namespace.taskTxId));
 }
 
-function getId(_req, res) {
-  res.status(200).send(namespace.taskTxId);
+async function getId(_req, res) {
+  if ( !_req.params.id ) res.status(500).send('No ID Provided');
+
+  let result = await getOrCreateThumbnail(_req.params.id);
+
+  res.status(200).send(result);
+}
+
+async function getOrCreateThumbnail( id ) {
+  // check if exists on IPFS pin
+
+  // or create and pin it
+  createThumbnail
+  // then return the entire image as a payload object
+
+  return image;
 }
 
 async function generateCard(_req, res) {
@@ -236,13 +256,20 @@ await update(data.id, cid);
 async function service(taskState, block) {
   if (lastBlock < block) {
     const input = {
-      function: "tallyBalance",
-      method: "add"
-    }
+      function: "proposeUpdate",
+      "aid": 'gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM',
+      "cid": 'QmVhDHYYas6rnt8frPqKp6T2KjobJfCDVEYEUUH8ZgBZhF'
+      }
+
+      // const input = {
+      //         function: "proposeSlash",
+      //         "uid": 'oDApIgwavkt2Ks2egnIF27iMMLMaVY41raK2l07ONp0',
+      //         "data": 'Soma'
+      //     }
     const txId = await kohaku.interactWrite(
-      arweave,
-      tools.wallet,
-      namespace.taskTxId,
+      arweave,   
+      wallet,          
+      contractInitialStateTx,
       input
     );
     console.log(input.function, "tx submitted");
