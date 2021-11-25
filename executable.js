@@ -66,19 +66,19 @@ async function root(_req, res) {
 
 async function getId(_req, res) {
   if ( !_req.params.id ) res.status(500).send('No ID Provided');
-
   let result = await getOrCreateThumbnail(_req.params.id);
-
   res.status(200).send(result);
 }
 
 async function getOrCreateThumbnail( id ) {
   // check if exists on IPFS pin
-
-  // or create and pin it
-  createThumbnail
+  client.get( id , function(err, reply) {
+     // or create and pin it
+    if (err) createThumbnail;
+    console.log(reply.toString()); // Will print "CID"
+  });
+ 
   // then return the entire image as a payload object
-
   return image;
 }
 
