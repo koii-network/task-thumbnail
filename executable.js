@@ -76,7 +76,7 @@ async function getId(_req, res) {
   }
   gatewayURI = "arweave.net"
   let result = await getOrCreateThumbnail(data);
-  const card = await generateSocialCard(data, false).catch((err) => {
+  const card = await generateSocialCard(data, false, result).catch((err) => {
     console.error(err);
   });
   
@@ -87,14 +87,19 @@ async function getOrCreateThumbnail(data) {
   client.get( data.id , function(err, reply) {
   // or create and pin it
   if (err) CreateCid(data);
-    console.log("CID is " + reply.toString()); // Will print "CID"
-  });
+  let cid = reply.toString()
+  console.log("CID is " + cid);
+  console.log(cid)
+  return cid;
+   // Will print "CID"
+  })
+ 
 }
 async function CreateCid(data) {
     console.log("trying to create CID with ", data);
     data.imgSrc = `https://${gatewayURI}/${data.id}`;
-    let thumb = await createThumbnail(data);
-    console.log('thumbnail created', thumb);
+    let cid = await createThumbnail(data);
+    console.log('cid created', cid);
 }
 // ******************** END Check ************************************ //
 
@@ -150,14 +155,14 @@ const renderMedia = (asBg, data, hasImg) => {
   else
     return `<img class="media" src='https://${gatewayURI}/${data.id}'/></img>`;
 };
-async function generateSocialCard(data, hasImg) {
+async function generateSocialCard(data, hasImg, result) {
   // NFT preview
   return new Promise(async (resolve, _reject) => {
     const markup = `
       <main>
             <!----- AId and CId Content ---->
-            <div> AID is ${data.id} and CID is </div>
-            
+            <div> AID is ${data.id} and CID is ${result} </div>
+
             <!----- NFT Media Content ---->
             <div class="nft-media">${renderMedia(true, data, hasImg)}</div>
             
