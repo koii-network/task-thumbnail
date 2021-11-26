@@ -21,7 +21,7 @@ require("dotenv").config();
 let contractInitialStateTx = "-cH8D20W-5Rql6sVcKWQ0j0NkjDGqWfqpWkCVNjdsn0";
 
 const ARWEAVE_RATE_LIMIT = 1000; // 60000;
-const arweave = tools.arweave;
+const arweave = ktools.arweave;
 let lastBlock = 0;
 
 async function setup(_init_state) {
@@ -38,49 +38,65 @@ client.set("gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM", "QmVhDHYYas6rnt8frPqKp
 client.get("gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM", function(err, reply) {
   console.log(reply.toString()); // Will print "QmVhDHYYas6rnt8frPqKp6T2KjobJfCDVEYEUUH8ZgBZhF"
 });
-// async function execute(_init_state) {
-//   let state, block;
-//   for (;;) {
-//     await rateLimit();
-//     try {
-//       state = await tools.getState(namespace.taskTxId);
-//       block = await tools.getBlockHeight();
-//       if (block < lastBlock) block = lastBlock;
-//     } catch (e) {
-//       console.error("Error getting task state or block", e);
-//       continue;
-//     }
-//     await (namespace.app ? service : witness)(state, block).catch((e) => {
-//       console.error("Error while performing task:", e);
-//     });
-//     lastBlock = block;
-//   }
-// }
+async function execute(_init_state) {
+  let state, block;
+  for (;;) {
+    await rateLimit();
+    try {
+      state = await tools.getState(namespace.taskTxId);
+      block = await tools.getBlockHeight();
+      if (block < lastBlock) block = lastBlock;
+    } catch (e) {
+      console.error("Error getting task state or block", e);
+      continue;
+    }
+    await (namespace.app ? service : witness)(state, block).catch((e) => {
+      console.error("Error while performing task:", e);
+    });
+    lastBlock = block;
+  }
+}
 
 async function root(_req, res) {
   res
     .status(200)
     .type("application/json")
-    .send(await tools.getState(namespace.taskTxId));
+    .send(await ktools.getState(namespace.taskTxId));
 }
-
+// ********************* GET id and check thumbnail and CID ******************************** //
 async function getId(_req, res) {
   if ( !_req.params.id ) res.status(500).send('No ID Provided');
-  let result = await getOrCreateThumbnail(_req.params.id);
-  res.status(200).send(result);
-}
-
-async function getOrCreateThumbnail( id ) {
-  // check if exists on IPFS pin
-  client.get( id , function(err, reply) {
-     // or create and pin it
-    if (err) createThumbnail;
-    console.log(reply.toString()); // Will print "CID"
+  let data;
+    try {
+      data = await ktools.getNftState( _req.params.id );
+    } catch (e) {
+      console.log("NFT not found or error getting data: ", e);
+      res.status(500).send({ success: false });
+      return;
+  }
+  gatewayURI = "arweave.net"
+  let result = await getOrCreateThumbnail(data);
+  const card = await generateSocialCard(data, false).catch((err) => {
+    console.error(err);
   });
- 
-  // then return the entire image as a payload object
-  return image;
+  
+  res.send(card);
 }
+async function getOrCreateThumbnail(data) {
+  // check if exists on IPFS pin
+  client.get( data.id , function(err, reply) {
+  // or create and pin it
+  if (err) CreateCid(data);
+    console.log("CID is " + reply.toString()); // Will print "CID"
+  });
+}
+async function CreateCid(data) {
+    console.log("trying to create CID with ", data);
+    data.imgSrc = `https://${gatewayURI}/${data.id}`;
+    let thumb = await createThumbnail(data);
+    console.log('thumbnail created', thumb);
+}
+// ******************** END Check ************************************ //
 
 async function generateCard(_req, res) {
   if (!_req.params.id) {
@@ -104,7 +120,6 @@ async function generateCard(_req, res) {
   console.log('thumbnail created', thumb);
   res.send(thumb);
 }
-
 async function generateCardWithData(_req, res) {
  
   console.log("generating card from data", _req.body);
@@ -120,6 +135,35 @@ async function generateCardWithData(_req, res) {
     res.json(thumb)
   }).catch((err) => {
     console.error(err);
+  });
+}
+
+const renderMedia = (asBg, data, hasImg) => {
+  if (data.contentType === "video/mp4" && !hasImg)
+    return `<video class="media" src="https://${gatewayURI}/${data.id}"></video>`;
+  if (data.contentType === "text/html" && !hasImg)
+    return `<iframe class="media" src="https://${gatewayURI}/${data.id}"></iframe>`;
+  if (hasImg)
+    return `<img class="media" src="https://koii.live/${data.id}.png"></img>`;
+  else if (asBg)
+    return `<img class="media" src='https://${gatewayURI}/${data.id}'/></img>`;
+  else
+    return `<img class="media" src='https://${gatewayURI}/${data.id}'/></img>`;
+};
+async function generateSocialCard(data, hasImg) {
+  // NFT preview
+  return new Promise(async (resolve, _reject) => {
+    const markup = `
+      <main>
+            <!----- AId and CId Content ---->
+            <div> AID is ${data.id} and CID is </div>
+            
+            <!----- NFT Media Content ---->
+            <div class="nft-media">${renderMedia(true, data, hasImg)}</div>
+            
+      </main>
+          `;
+    resolve(markup);
   });
 }
 
@@ -255,6 +299,7 @@ await update(data.id, cid);
 
 async function service(taskState, block) {
   if (lastBlock < block) {
+    wallet = ktools.wallet;
     const input = {
       function: "proposeUpdate",
       "aid": 'gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM',
