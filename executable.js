@@ -76,24 +76,26 @@ async function getId(_req, res) {
   }
   gatewayURI = "arweave.net"
   let result = await getOrCreateThumbnail(data);
+  console.log(result);
+  
   const card = await generateSocialCard(data, false, result).catch((err) => {
     console.error(err);
   });
-  
   res.send(card);
 }
 async function getOrCreateThumbnail(data) {
   // check if exists on IPFS pin
-  client.get( data.id , function(err, reply) {
-  // or create and pin it
-  if (err) CreateCid(data);
-  let cid = reply.toString()
-  console.log("CID is " + cid);
-  console.log(cid)
-  return cid;
-   // Will print "CID"
+  return new Promise((resolve, reject) => {
+    client.get( data.id , function(err, cid) {
+      // or create and pin it
+      if (err) reject(err);
+      console.log("CID is " + cid.toString());
+      // if cid is null then CreateCid(data)
+      console.log(cid)
+      resolve(cid);
+      // Will print "CID"
+    })
   })
- 
 }
 async function CreateCid(data) {
     console.log("trying to create CID with ", data);
@@ -297,7 +299,7 @@ await update(data.id, cid);
       await update(data.id, cid);
       return cid
   })
-    
+
 }
 };      
 // ******************* End Create Thumbnail ************************* //
