@@ -81,7 +81,7 @@ async function getId(_req, res) {
   const card = await generateSocialCard(data, false, result).catch((err) => {
     console.error(err);
   });
-  res.send(card);
+  res.send(card + "hello");
 }
 async function getOrCreateThumbnail(data) {
   // check if exists on IPFS pin
@@ -89,10 +89,15 @@ async function getOrCreateThumbnail(data) {
     client.get( data.id , function(err, cid) {
       // or create and pin it
       if (err) reject(err);
-      console.log("CID is " + cid.toString());
-      // if cid is null then CreateCid(data)
-      console.log(cid)
+      
+      if (cid === null) {
+        CreateCid(data)
+      } else {
+        console.log("CID is " + cid.toString());
+        // console.log(cid)
+      }
       resolve(cid);
+      
       // Will print "CID"
     })
   })
@@ -100,8 +105,13 @@ async function getOrCreateThumbnail(data) {
 async function CreateCid(data) {
     console.log("trying to create CID with ", data);
     data.imgSrc = `https://${gatewayURI}/${data.id}`;
-    let cid = await createThumbnail(data);
+    let thumbnail = await createThumbnail(data);
+    const cid = await ipfs.add(thumbnail)
+    console.info(cid.path)
+    console.log(data.id + "'s thumbnail is" + cid.path)
+    client.set(data.id, cid.path, redis.print)
     console.log('cid created', cid);
+    return cid
 }
 // ******************** END Check ************************************ //
 
@@ -181,36 +191,40 @@ async function createThumbnail (data, hasImg) {
   console.log("conent type is " + data.contentType + "  hasImg is " + hasImg)
   // Upload video thumbnail
   if (data.contentType === "video/mp4") {
-    extractFrames({
-      input: 'https://' + gatewayURI + '/' + data.id,
-      output: imagePath,
-      offsets: [
-        0000
-      ]
+    return new Promise((resolve, reject) => {
+      extractFrames({
+        input: 'https://' + gatewayURI + '/' + data.id,
+        output: imagePath,
+        offsets: [
+          0000
+        ]
+      })
+      .then (async (output) =>{
+        const resize = await sharp(output)
+          .resize(500, 500, {
+            kernel: sharp.kernel.nearest,
+            fit: 'contain',
+            position: 'centre',
+            background: { r: 0, g: 0, b: 0, alpha: 1 }
+          })
+          .toFormat('png')
+          .toBuffer();
+          const cid = await ipfs.add(resize)
+          console.info(cid)
+          console.log(data.id + "'s thumbnail is" + cid.path)
+          client.set(data.id, cid.path, redis.print)
+          fs.unlink(output, (err) => {
+            if (err) throw err;
+            console.log(output, ' was deleted');
+          });
+          
+      }).catch((err) => {
+        console.error(err);
+      });
+      console.log(cid.path)
+      resolve(cid.path);
     })
-    .then (async (output) =>{
-      const resize = await sharp(output)
-        .resize(500, 500, {
-          kernel: sharp.kernel.nearest,
-          fit: 'contain',
-          position: 'centre',
-          background: { r: 0, g: 0, b: 0, alpha: 1 }
-        })
-        .toFormat('png')
-        .toBuffer();
-        const { cid } = await ipfs.add(resize)
-        console.info(cid)
-        fs.unlink(output, (err) => {
-          if (err) throw err;
-          console.log(output, ' was deleted');
-        });
-        
-    }).catch((err) => {
-      console.error(err);
-    })
-      .then(async () => {
-        await update(data.id, cid)         
-    })
+    
 
   // upload text/html thumbnail
   } else if (data.contentType === "text/html") {
@@ -277,28 +291,28 @@ await update(data.id, cid);
 
 // upload image thumbnail  
 } else {
-  axios({
-    method: 'get',
-    url: "https://" + gatewayURI  + "/" + data.id,
-    responseType: 'arraybuffer'
+  return new Promise((resolve, reject) => {
+    axios({
+      method: 'get',
+      url: "https://" + gatewayURI  + "/" + data.id,
+      responseType: 'arraybuffer'
+    })
+      .then(async (response) => {
+      // console.log(response.data)
+       const resize = await sharp(response.data)
+        .resize(500, 500, {
+          kernel: sharp.kernel.nearest,
+          fit: 'contain',
+          position: 'centre',
+          background: { r: 0, g: 0, b: 0, alpha: 1 }
+        })
+        .toFormat('png')
+        .toBuffer();
+        console.log(resize) 
+        resolve(resize);
+    })
   })
-    .then(async (response) => {
-    // console.log(response.data)
-     const resize = await sharp(response.data)
-      .resize(500, 500, {
-        kernel: sharp.kernel.nearest,
-        fit: 'contain',
-        position: 'centre',
-        background: { r: 0, g: 0, b: 0, alpha: 1 }
-      })
-      .toFormat('png')
-      .toBuffer();
-      console.log(resize) 
-      const { cid } = await ipfs.add(resize)
-      console.info(cid)
-      await update(data.id, cid);
-      return cid
-  })
+  
 
 }
 };      
