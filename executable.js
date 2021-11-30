@@ -14,6 +14,7 @@ const puppeteer = require('puppeteer');
 const IPFS = require('ipfs-core');
 const CID = require('multiformats/cid');
 const { response } = require("express");
+const path = require('path');
 let ipfs;
 const redis = require('redis');
 const client = redis.createClient();
@@ -75,13 +76,14 @@ async function getId(_req, res) {
       return;
   }
   gatewayURI = "arweave.net"
-  let result = await getOrCreateThumbnail(data);
-  console.log(result);
+  var cid = await getOrCreateThumbnail(data);
+  console.log(cid)
   
-  const card = await generateSocialCard(data, false, result).catch((err) => {
+  const card = await generateSocialCard(data, false, cid).catch((err) => {
     console.error(err);
   });
-  res.send(card + "hello");
+  var file = 'output.webp'
+  res.sendFile(path.resolve(file), cid);
 }
 async function getOrCreateThumbnail(data) {
   // check if exists on IPFS pin
@@ -91,12 +93,14 @@ async function getOrCreateThumbnail(data) {
       if (err) reject(err);
       
       if (cid === null) {
-        CreateCid(data)
+        var cid = CreateCid(data)
       } else {
         console.log("CID is " + cid.toString());
         // console.log(cid)
+        // var thumbnail = createThumbnail(data);
       }
-      resolve(cid);
+      console.log(cid);
+      resolve (cid);
       
       // Will print "CID"
     })
@@ -105,12 +109,13 @@ async function getOrCreateThumbnail(data) {
 async function CreateCid(data) {
     console.log("trying to create CID with ", data);
     data.imgSrc = `https://${gatewayURI}/${data.id}`;
-    let thumbnail = await createThumbnail(data);
+    var thumbnail = await createThumbnail(data);
     const cid = await ipfs.add(thumbnail)
     console.info(cid.path)
     console.log(data.id + "'s thumbnail is" + cid.path)
     client.set(data.id, cid.path, redis.print)
     console.log('cid created', cid);
+    // console.log('thumbnail is' + thumbnail)
     return cid
 }
 // ******************** END Check ************************************ //
@@ -167,14 +172,15 @@ const renderMedia = (asBg, data, hasImg) => {
   else
     return `<img class="media" src='https://${gatewayURI}/${data.id}'/></img>`;
 };
-async function generateSocialCard(data, hasImg, result) {
+async function generateSocialCard(data, hasImg, cid) {
   // NFT preview
   return new Promise(async (resolve, _reject) => {
     const markup = `
       <main>
             <!----- AId and CId Content ---->
-            <div> AID is ${data.id} and CID is ${result} </div>
-
+            <div> AID is ${data.id} and CID is ${cid} </div>
+            <!----- thumbnail Content ---->
+            <div> Thumbnail is <img src=/output.webp> </div>
             <!----- NFT Media Content ---->
             <div class="nft-media">${renderMedia(true, data, hasImg)}</div>
             
@@ -307,8 +313,8 @@ await update(data.id, cid);
           background: { r: 0, g: 0, b: 0, alpha: 1 }
         })
         .toFormat('png')
-        .toBuffer();
-        console.log(resize) 
+        .toFile('output.webp');
+        // console.log(resize) 
         resolve(resize);
     })
   })
