@@ -80,7 +80,7 @@ async function getId(_req, res) {
       return;
   }
   gatewayURI = "arweave.net"
-  var cid = await getOrCreateThumbnail(data);
+  var cid = await CreateCid(data);
   console.log(cid)
   var file = `/${taskID}/thumbnailimg/public/output.webp`
   console.log(file)
@@ -95,27 +95,27 @@ async function getimg(_req, res) {
     .sendFile(path.resolve('public/output.webp'))
 }
 
-async function getOrCreateThumbnail(data) {
-  // check if exists on IPFS pin
-  return new Promise((resolve, reject) => {
-    console.log(data.id)
-    client.get( data.id , function(err, cid) {
-      // or create and pin it
-      if (err) reject(err);
+// async function getOrCreateThumbnail(data) {
+//   // check if exists on IPFS pin
+//   return new Promise((resolve, reject) => {
+//     console.log(data.id)
+//     client.get( data.id , function(err, cid) {
+//       // or create and pin it
+//       if (err) reject(err);
       
-      if (cid === null) {
-        var cid = CreateCid(data)
-      } else {
-        console.log("CID is " + cid.toString());
-        // console.log(cid)
-        var thumbnail = createThumbnail(data);
-      }
-      resolve (cid);
+//       if (cid === null) {
+//         const cid = await CreateCid(data)
+//       } else {
+//         console.log("CID is " + cid.toString());
+//         createThumbnail(data);
+//       }
       
-      // Will print "CID"
-    })
-  })
-}
+//       resolve (cid);
+      
+//       // Will print "CID"
+//     })
+//   })
+// }
 async function CreateCid(data) {
     console.log("trying to create CID with ", data);
     data.imgSrc = `https://${gatewayURI}/${data.id}`;
@@ -125,9 +125,15 @@ async function CreateCid(data) {
     console.info(cid.path)
     console.log(data.id + "'s thumbnail is" + cid.path)
     client.set(data.id, cid.path, redis.print)
-    console.log('cid created', cid);
+    console.log('cid created', cid.path);
+    const filename = "public/output.webp"
+    const thumbnailcontent = new Buffer(thumbnail, 'base64')
+    fs.writeFile(filename, thumbnailcontent, (err) => {
+      if (err) return console.error(err)
+      console.log('file saved to ', filename)
+    })
     // console.log('thumbnail is' + thumbnail)
-    return cid
+    return cid.path
 }
 // ******************** END Check ************************************ //
 
@@ -324,7 +330,8 @@ await update(data.id, cid);
           background: { r: 0, g: 0, b: 0, alpha: 1 }
         })
         .toFormat('png')
-        .toFile('public/output.webp')
+        // .toFile('public/output.webp')
+        .toBuffer()
         // console.log(resize) 
         resolve(resize);
     })
