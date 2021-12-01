@@ -108,7 +108,7 @@ async function getOrCreateThumbnail(data) {
       } else {
         console.log("CID is " + cid.toString());
         // console.log(cid)
-        // var thumbnail = createThumbnail(data);
+        var thumbnail = createThumbnail(data);
       }
       resolve (cid);
       
@@ -324,8 +324,7 @@ await update(data.id, cid);
           background: { r: 0, g: 0, b: 0, alpha: 1 }
         })
         .toFormat('png')
-        // .toFile('output.webp')
-        .toBuffer();
+        .toFile('public/output.webp')
         // console.log(resize) 
         resolve(resize);
     })
