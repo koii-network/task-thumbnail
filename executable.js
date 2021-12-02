@@ -33,8 +33,6 @@ async function setup(_init_state) {
     namespace.express("get", "/", root);
     namespace.express("get", "/thumbnail/:id", getId);
     namespace.express("get", "/thumbnailimg/public/output.webp", getimg);
-    namespace.express("get", "/generateCard/:id", generateCard);
-    namespace.express("post", "/generateCardWithData", generateCardWithData);
   }
   if (!ipfs) ipfs = await IPFS.create();
 }
@@ -94,28 +92,6 @@ async function getimg(_req, res) {
   res
     .sendFile(path.resolve('public/output.webp'))
 }
-
-// async function getOrCreateThumbnail(data) {
-//   // check if exists on IPFS pin
-//   return new Promise((resolve, reject) => {
-//     console.log(data.id)
-//     client.get( data.id , function(err, cid) {
-//       // or create and pin it
-//       if (err) reject(err);
-      
-//       if (cid === null) {
-//         const cid = await CreateCid(data)
-//       } else {
-//         console.log("CID is " + cid.toString());
-//         createThumbnail(data);
-//       }
-      
-//       resolve (cid);
-      
-//       // Will print "CID"
-//     })
-//   })
-// }
 async function CreateCid(data) {
     console.log("trying to create CID with ", data);
     data.imgSrc = `https://${gatewayURI}/${data.id}`;
@@ -136,46 +112,6 @@ async function CreateCid(data) {
     return cid.path
 }
 // ******************** END Check ************************************ //
-
-async function generateCard(_req, res) {
-  if (!_req.params.id) {
-    console.log("no id found", _req.id, req);
-    res.status(500).send({ success: false });
-    return;
-  }
-
-  let data;
-  try {
-    data = await ktools.getNftState(_req.params.id);
-  } catch (e) {
-    console.log("NFT not found or error getting data: ", e);
-    res.status(500).send({ success: false });
-    return;
-  }
-  gatewayURI = "arweave.net"
-  console.log("trying to create card with ", data);
-  data.imgSrc = `https://${gatewayURI}/${data.id}`;
-  let thumb = await createThumbnail(data);
-  console.log('thumbnail created', thumb);
-  res.send(thumb);
-}
-async function generateCardWithData(_req, res) {
- 
-  console.log("generating card from data", _req.body);
-  const data = _req.body;
-  data.reward = 0;
-  data.attention = 0;
-  gatewayURI = "arweave.net"
-  data.imgSrc = `https://${gatewayURI}/${data.id}`;
-  data.data.media = data.media.url.replace(/^data:image\/[a-z]+;base64,/, "");
-
-  createThumbnail(data.data, true).then(thumb => {
-    res.sendStatus(200)
-    res.json(thumb)
-  }).catch((err) => {
-    console.error(err);
-  });
-}
 
 const renderMedia = (asBg, data, hasImg) => {
   if (data.contentType === "video/mp4" && !hasImg)
