@@ -27,7 +27,16 @@ let lastBlock = 0;
 
 const taskID = namespace.taskTxId;
 console.log(taskID)
-// namespace.express("static", "public");
+
+let browser = null;
+(async () => {
+  browser = await puppeteer.launch({
+    slowMo: 1000,
+    args: ["--no-sandbox"]
+  });
+  console.log("Browser loaded")
+})();
+
 async function setup(_init_state) {
   if (namespace.app) {
     namespace.express("get", "/", root);
@@ -166,7 +175,8 @@ async function createThumbnail (data, hasImg) {
             position: 'centre',
             background: { r: 0, g: 0, b: 0, alpha: 1 }
           })
-          .toFormat('png')
+          // .toFormat('png')
+          .withMetadata()
           .toBuffer();
           resolve(resize);
           fs.unlink(output, (err) => {
@@ -179,43 +189,38 @@ async function createThumbnail (data, hasImg) {
       });
     })
   } else if (data.contentType === "text/html") { // upload text/html thumbnail
-    (async () => {
-      const browser = await puppeteer.launch({
-        slowMo: 1000,
-        args: ["--no-sandbox"]
-      });
-      const page = await browser.newPage();
-      await page.goto(data.imgSrc , {
-        waitUntil: 'load',
-      });
-      await page.screenshot({ path: imagePath })
-      .then (async (path) =>{
-        const resize = await sharp(path)
-          .resize(500, 500, {
-            kernel: sharp.kernel.nearest,
-            fit: 'contain',
-            position: 'centre',
-            background: { r: 0, g: 0, b: 0, alpha: 1 }
+    return new Promise((resolve, reject) => {
+      (async () => {
+        const page = await browser.newPage();
+        await page.goto(data.imgSrc, {
+          waitUntil: "load"
+        });
+        await page.waitForSelector('#main > div')
+        const element = await page.$('#main > div')
+        await element.screenshot({ path: imagePath })
+          .then(async (path) => {
+            const resize = await sharp(path)
+              .resize(500, 500, {
+                kernel: sharp.kernel.nearest,
+                fit: "contain",
+                position: "centre",
+                background: { r: 0, g: 0, b: 0, alpha: 1 }
+              })
+              .withMetadata()
+              // .toFormat("png")
+              .toBuffer();
+              resolve(resize);
+            fs.unlink(imagePath, (err) => {
+              if (err) throw err;
+              console.log(imagePath, " was deleted");
+            });
           })
-          .toFormat('png')
-          .toBuffer();
-          const { cid } = await ipfs.add(resize)
-          console.info(cid)
-          fs.unlink(imagePath, (err) => {
-            if (err) throw err;
-            console.log(imagePath, ' was deleted');
-          });
-          
-      }).catch((err) => {
-        console.error(err);
-      })
-        .then(async () => {
-          await update(data.id, cid)     
-      });
-      await browser.close();
-    })();
-
-
+          .catch((err) => {
+            console.error(err);
+          })
+          await page.close();
+      })();
+    })
 } else if (hasImg) { // *** NOT USING *** upload POST image thumbnail 
   var buff = new Buffer(data.media, 'base64');
   fs.writeFileSync(imagePath, buff);
