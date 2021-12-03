@@ -146,10 +146,10 @@ async function generateSocialCard(data, hasImg, cid, file) {
 // *************** Create Thumbnail Function ******************************** //
 async function createThumbnail (data, hasImg) {
   // NFT thumbnail upload
-  const imagePath = "./src/thumbnail/" + data.id + ".png";
+  const imagePath = "./public/" + data.id + ".png";
   console.log("conent type is " + data.contentType + "  hasImg is " + hasImg)
-  // Upload video thumbnail
-  if (data.contentType === "video/mp4") {
+  
+  if (data.contentType === "video/mp4") { // Upload video thumbnail
     return new Promise((resolve, reject) => {
       extractFrames({
         input: 'https://' + gatewayURI + '/' + data.id,
@@ -168,10 +168,7 @@ async function createThumbnail (data, hasImg) {
           })
           .toFormat('png')
           .toBuffer();
-          const cid = await ipfs.add(resize)
-          console.info(cid)
-          console.log(data.id + "'s thumbnail is" + cid.path)
-          client.set(data.id, cid.path, redis.print)
+          resolve(resize);
           fs.unlink(output, (err) => {
             if (err) throw err;
             console.log(output, ' was deleted');
@@ -180,13 +177,8 @@ async function createThumbnail (data, hasImg) {
       }).catch((err) => {
         console.error(err);
       });
-      console.log(cid.path)
-      resolve(cid.path);
     })
-    
-
-  // upload text/html thumbnail
-  } else if (data.contentType === "text/html") {
+  } else if (data.contentType === "text/html") { // upload text/html thumbnail
     (async () => {
       const browser = await puppeteer.launch({
         slowMo: 1000,
@@ -223,8 +215,8 @@ async function createThumbnail (data, hasImg) {
       await browser.close();
     })();
 
-// upload POST image thumbnail  
-} else if (hasImg) {
+
+} else if (hasImg) { // *** NOT USING *** upload POST image thumbnail 
   var buff = new Buffer(data.media, 'base64');
   fs.writeFileSync(imagePath, buff);
    $: resize = await sharp(buff)
@@ -234,7 +226,8 @@ async function createThumbnail (data, hasImg) {
         position: 'centre',
         background: { r: 0, g: 0, b: 0, alpha: 1 }
       })
-      .toFormat('png')
+      // .toFormat('png')
+      .withMetadata()
       .toBuffer()
       console.log(resize) 
       const { cid } = await ipfs.add(resize)
@@ -244,12 +237,8 @@ async function createThumbnail (data, hasImg) {
         if (err) throw err;
         console.log(imagePath, ' was deleted');
       }
-);
-
-await update(data.id, cid);   
-
-// upload image thumbnail  
-} else {
+  );
+} else { // upload image thumbnail  
   return new Promise((resolve, reject) => {
     axios({
       method: 'get',
@@ -265,10 +254,9 @@ await update(data.id, cid);
           position: 'centre',
           background: { r: 0, g: 0, b: 0, alpha: 1 }
         })
-        .toFormat('png')
-        // .toFile('public/output.webp')
+        .withMetadata()
+        // .toFormat('png')
         .toBuffer()
-        // console.log(resize) 
         resolve(resize);
     })
   })
