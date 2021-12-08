@@ -51,8 +51,8 @@ async function execute(_init_state) {
   for (;;) {
     await rateLimit();
     try {
-      state = await ktools.getState(namespace.taskTxId);
-      block = await ktools.getBlockHeight();
+      state = await tools.getState(namespace.taskTxId);
+      block = await tools.getBlockHeight();
       if (block < lastBlock) block = lastBlock;
     } catch (e) {
       console.error("Error getting task state or block", e);
@@ -90,7 +90,6 @@ async function getId(_req, res) {
   const card = await generateSocialCard(data, false, cid, file).catch((err) => {
     console.error(err);
   });
-  // res.sendFile(path.resolve(file));
   res.send(card);
 }
 async function getimg(_req, res) {
@@ -269,11 +268,11 @@ async function createThumbnail (data, hasImg) {
 
 async function service(taskState, block) {
   if (lastBlock < block) {
-    wallet = ktools.wallet;
+    wallet = tools.wallet;
     const input = {
       function: "proposeUpdate",
-      "aid": 'gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM',
-      "cid": 'QmVhDHYYas6rnt8frPqKp6T2KjobJfCDVEYEUUH8ZgBZhF'
+      aid: aid,
+      cid: cid
       }
     const txId = await kohaku.interactWrite(
       arweave,   
