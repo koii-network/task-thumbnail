@@ -46,17 +46,13 @@ async function setup(_init_state) {
   if (!ipfs) ipfs = await IPFS.create();
 }
 
-client.set("gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM", "QmVhDHYYas6rnt8frPqKp6T2KjobJfCDVEYEUUH8ZgBZhF", redis.print)
-client.get("gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM", function(err, reply) {
-  console.log(reply.toString()); // Will print "QmVhDHYYas6rnt8frPqKp6T2KjobJfCDVEYEUUH8ZgBZhF"
-});
 async function execute(_init_state) {
   let state, block;
   for (;;) {
     await rateLimit();
     try {
-      state = await tools.getState(namespace.taskTxId);
-      block = await tools.getBlockHeight();
+      state = await ktools.getState(namespace.taskTxId);
+      block = await ktools.getBlockHeight();
       if (block < lastBlock) block = lastBlock;
     } catch (e) {
       console.error("Error getting task state or block", e);
@@ -279,12 +275,6 @@ async function service(taskState, block) {
       "aid": 'gtSQKcx3Ex8eOdgZxNh0rWSNiKQCt3Xi02cGnJQ_uSM',
       "cid": 'QmVhDHYYas6rnt8frPqKp6T2KjobJfCDVEYEUUH8ZgBZhF'
       }
-
-      // const input = {
-      //         function: "proposeSlash",
-      //         "uid": 'oDApIgwavkt2Ks2egnIF27iMMLMaVY41raK2l07ONp0',
-      //         "data": 'Soma'
-      //     }
     const txId = await kohaku.interactWrite(
       arweave,   
       wallet,          

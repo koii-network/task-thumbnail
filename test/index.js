@@ -15,12 +15,12 @@ async function main() {
 
   const networkInfo = await arweave.network.getInfo();
 
-  // for (let height = networkInfo.height; height < 720; ++height) {
-  //   await mineBlock();
-  //   await sleepAsync(200);
-  // }
+  for (let height = networkInfo.height; height < 720; ++height) {
+    await mineBlock();
+    await sleepAsync(200);
+  }
 
-  // console.log("Test finished, press Ctrl + C to exit");
+  console.log("Test finished, press Ctrl + C to exit");
 }
 
 async function sleepAsync(ms) {
