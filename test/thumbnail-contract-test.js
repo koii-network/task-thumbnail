@@ -4,7 +4,7 @@ const {interactWrite, interactWriteDryRun} = require("smartweave")
 let Smartweave = require('smartweave');
 let fs = require('fs');
 require("dotenv").config();
-let contractInitialStateTx = "-cH8D20W-5Rql6sVcKWQ0j0NkjDGqWfqpWkCVNjdsn0";
+let contractInitialStateTx = "fKcLelLSsdIKm88e7UgGrVN0qvYzz58UkzJmw5ocvRU";
 
 const walletPath = process.env.WALLET_LOCATION;
 if (!walletPath) throw new Error("WALLET_LOCATION not specified in .env");

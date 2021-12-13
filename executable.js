@@ -40,8 +40,8 @@ let browser = null;
 async function setup(_init_state) {
   if (namespace.app) {
     namespace.express("get", "/", root);
-    namespace.express("get", "/thumbnail/:id", getId);
-    namespace.express("get", "/thumbnailimg/public/output.webp", getimg);
+    namespace.express("get", "/thumbnail/:id", getId); // Get or create image
+    namespace.express("get", "/thumbnail/img/:id", getimg); // return thumbnail only 
   }
   if (!ipfs) ipfs = await IPFS.create();
 }
@@ -85,7 +85,7 @@ async function getId(_req, res) {
   gatewayURI = "arweave.net"
   var cid = await CreateCid(data);
   console.log(cid)
-  var file = `/${taskID}/thumbnailimg/public/output.webp`
+  var file = `/${taskID}/thumbnail/img/${data.id}`
   console.log(file)
   const card = await generateSocialCard(data, false, cid, file).catch((err) => {
     console.error(err);
@@ -99,7 +99,7 @@ async function getId(_req, res) {
 }
 async function getimg(_req, res) {
   res
-    .sendFile(path.resolve('public/output.webp'))
+    .sendFile(path.resolve(`img/${_req.params.id}.webp`))
 }
 async function CreateCid(data) {
     console.log("trying to create CID with ", data);
@@ -111,7 +111,7 @@ async function CreateCid(data) {
     console.log(data.id + "'s thumbnail is" + cid.path)
     client.set(data.id, cid.path, redis.print)
     console.log('cid created', cid.path);
-    const filename = "public/output.webp"
+    const filename = `img/${data.id}.webp`
     const thumbnailcontent = new Buffer(thumbnail, 'base64')
     fs.writeFile(filename, thumbnailcontent, (err) => {
       if (err) return console.error(err)

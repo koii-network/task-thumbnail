@@ -5,7 +5,11 @@
   "license": "MIT",
   "scripts": {
     "build": "rollup --config ./rollup.config.js && node ./bin/format.js",
-    "test": "jest"
+    "test": "jest",
+    "deploy": "yarn build && node ./bin/deploy.js",
+    "execute": "node ./bin/execute.js",
+    "deploy_executable": "node ./bin/deploy_executable.js",
+    "deploy_task": "yarn build && node ./bin/task_deployment"
   },
   "jest": {
     "testEnvironment": "node",
