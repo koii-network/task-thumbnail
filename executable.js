@@ -91,6 +91,11 @@ async function getId(_req, res) {
     console.error(err);
   });
   res.send(card);
+  const thumbnails = {
+    aid: _req.params.id,
+    cid: cid
+  }
+  await uploadthubnail(thumbnails);
 }
 async function getimg(_req, res) {
   res
@@ -114,6 +119,26 @@ async function CreateCid(data) {
     })
     // console.log('thumbnail is' + thumbnail)
     return cid.path
+}
+async function uploadthubnail(state) {
+  wallet = tools.wallet;
+  cid = state.cid;
+  aid = state.aid
+  console.log('cid is ' + cid + 'and aid is' + aid)
+    const input = {
+      function: "proposeUpdate",
+      method: 'add',
+      cid: cid,
+      aid: aid
+      }
+    const txId = await kohaku.interactWrite(
+      arweave,   
+      wallet,          
+      contractInitialStateTx,
+      input
+    );
+    console.log(input.function, "tx submitted");
+    await checkTxConfirmation(txId, 60000);
 }
 // ******************** END Check ************************************ //
 
@@ -271,8 +296,7 @@ async function service(taskState, block) {
     wallet = tools.wallet;
     const input = {
       function: "proposeUpdate",
-      aid: aid,
-      cid: cid
+      method: 'add'
       }
     const txId = await kohaku.interactWrite(
       arweave,   
