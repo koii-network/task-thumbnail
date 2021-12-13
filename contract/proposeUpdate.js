@@ -7,9 +7,6 @@ export default function proposeUpdate(state, action) {
     const aid = input.aid;
     const cid = input.cid;
 
-    const koiiState = await SmartWeave.contracts.readContractState(
-      state.koiiContractId
-    );
     // checks for AID
     if (!aid) throw new ContractError("Invalid input");
     if (typeof aid !== "string") throw new ContractError("Invalid input format");
